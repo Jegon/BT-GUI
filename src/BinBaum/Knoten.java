@@ -36,7 +36,7 @@ public class Knoten implements BE {
         int k = this.index.compareToIgnoreCase(index);
         if(k == 0){
             try{
-                links.einfuegen(rechts);
+                links = links.einfuegen(rechts);
             }catch(IndexAlreadyExistsException ex){
                 System.err.println("Fehler biem loeschen von \"" + index + "\"!");
                 ex.printStackTrace();

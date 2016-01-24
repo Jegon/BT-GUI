@@ -19,7 +19,7 @@ public class BinBaum {
         root = root.loeschen(index);
     }
 
-    int knotenanzahl(){
+    public int knotenanzahl(){
         return root.knotenanzahl();
     }
 
@@ -33,19 +33,6 @@ public class BinBaum {
         } catch (IndexNotFoundException e) {
             System.err.println("\"" + index + "\" konnte nicht gefunden werden!");
             return null;
-        }
-    }
-
-    public void loadShit() {
-        try {
-            einfuegen("Hallo", "Peter");
-            einfuegen("Abc", "Alphabet");
-            einfuegen("Yolo", "You only live once");
-            einfuegen("lol", "laughing out loudly");
-            einfuegen("stfu", "shut the fuck up");
-            einfuegen("rofl", "rolling on th");
-        }catch(Exception e){
-            e.printStackTrace();
         }
     }
 }

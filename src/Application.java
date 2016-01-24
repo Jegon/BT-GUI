@@ -1,7 +1,10 @@
 import BinBaum.BinBaum;
 import BinBaum.BE;
 import BinBaum.IndexAlreadyExistsException;
+import BinBaum.IndexNotFoundException;
 import javafx.application.Platform;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
@@ -9,6 +12,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -17,6 +21,8 @@ import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
@@ -29,9 +35,13 @@ public class Application extends javafx.application.Application {
     private GraphicsContext gc;
     private BinBaum binBaum;
     private Canvas canvas;
+    private IntegerProperty tiefeProp;
+    private IntegerProperty knotenProp;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        tiefeProp = new SimpleIntegerProperty(0);
+        knotenProp = new SimpleIntegerProperty(0);
         Scene scene = new Scene(createGUI(primaryStage));
 
         primaryStage.setTitle("Binär Baum blabalabla");
@@ -53,12 +63,13 @@ public class Application extends javafx.application.Application {
         primaryStage.show();
 
         binBaum = new BinBaum();
-        //binBaum.loadShit();
 
         reload();
     }
 
     private void reload() {
+        tiefeProp.setValue(binBaum.tiefe());
+        knotenProp.setValue(binBaum.knotenanzahl());
         int baumTiefe = binBaum.tiefe() + 1; //+1 Wegen Endobjekten!
         int baumBreite = zweiHoch(baumTiefe);
         int breitePixel = baumBreite * 100 + (baumBreite - 1) * 20;
@@ -123,7 +134,7 @@ public class Application extends javafx.application.Application {
         BorderPane layout = new BorderPane();
         //MenuBar:
         MenuBar menuBar = new MenuBar();
-        Menu file = new Menu("Datei");
+        Menu menuFile = new Menu("Datei");
         MenuItem exit = new MenuItem("Beenden");
         exit.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -131,8 +142,17 @@ public class Application extends javafx.application.Application {
                 stage.close();
             }
         });
-        file.getItems().addAll(exit);
-        menuBar.getMenus().addAll(file);
+        MenuItem reset = new MenuItem("Reset");
+        reset.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                binBaum = new BinBaum();
+                reload();
+            }
+        });
+
+        menuFile.getItems().addAll(reset, new SeparatorMenuItem(), exit);
+        menuBar.getMenus().addAll(menuFile);
 
         canvas = new Canvas();
         gc = canvas.getGraphicsContext2D();
@@ -140,12 +160,7 @@ public class Application extends javafx.application.Application {
         gc.setTextAlign(TextAlignment.CENTER);
         canvas.setHeight(400);
         canvas.setWidth(400);
-        canvas.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                System.out.println("Breite: " + canvas.getWidth() + "\nHöhe: " + canvas.getHeight());
-            }
-        });
+
         Pane pane = new Pane();
         pane.getChildren().addAll(canvas);
         ScrollPane scrollPane = new ScrollPane(pane);
@@ -178,9 +193,11 @@ public class Application extends javafx.application.Application {
         layout.setHgap(10);
         layout.setVgap(10);
         layout.setPadding(new Insets(10, 10, 10, 10));
+        Font ueberschrift = Font.font(null, FontWeight.BOLD, 15);
 
         //Einfuegen:
         Label einfuegen = new Label("Einfügen:");
+        einfuegen.setFont(ueberschrift);
         final TextField einfuegenTF1 = new TextField("Index");
         final TextField einfuegenTF2 = new TextField("Info");
         final Button einfuegenB = new Button("Einfügen");
@@ -249,8 +266,79 @@ public class Application extends javafx.application.Application {
                 }
             }
         });
+        einfuegenB.defaultButtonProperty().bind(einfuegenB.focusedProperty());
 
-        //Loeschen:
+        //Löschen:
+        layout.add(new Separator(Orientation.HORIZONTAL), 0, 4, 2, 1);
+        Label loeschen = new Label("Löschen:");
+        loeschen.setFont(ueberschrift);
+        final TextField loeschenTF = new TextField("Index");
+        final Button loeschenB = new Button("Löschen");
+        layout.add(loeschen, 0, 5);
+        layout.add(loeschenTF, 0, 6);
+        layout.add(loeschenB, 1, 6);
+        final StringProperty loeschenT = new SimpleStringProperty();
+        loeschenTF.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(newValue)
+                    loeschenTF.setText(loeschenT.getValue());
+                else {
+                    loeschenT.setValue(loeschenTF.getText());
+                    if(loeschenT.getValue() == null)
+                        loeschenTF.setText("Index");
+                    else if(loeschenT.getValue().equals(""))
+                        loeschenTF.setText("Index");
+                }
+            }
+        });
+        loeschenTF.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                loeschenB.requestFocus();
+            }
+        });
+        loeschenB.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                try {
+                    if(loeschenT.getValue() != null) {
+                        if(!loeschenT.getValue().replaceAll("//s+", "").equals("")) {
+                            binBaum.loeschen(loeschenT.getValue());
+                            loeschenT.setValue(null);
+                            loeschenTF.setText("Löschen");
+                            reload();
+                        }
+                    }
+                } catch (IndexNotFoundException e) {
+                    e.printStackTrace(); //todo fehlermeldung
+                }
+            }
+        });
+        loeschenB.defaultButtonProperty().bind(loeschenB.focusedProperty());
+
+        //Stats:
+        layout.add(new Separator(Orientation.HORIZONTAL), 0, 7, 2, 1);
+        Label stats = new Label("Swag n Stats:");
+        stats.setFont(ueberschrift);
+        Label tiefe = new Label("Tiefe: 0");
+        Label knoten = new Label("Knoten: 0");
+        layout.add(stats, 0, 8, 2, 1);
+        layout.add(tiefe, 0, 9, 2, 1);
+        layout.add(knoten, 0, 10, 2, 1);
+        tiefeProp.addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                tiefe.setText("Tiefe: " + newValue);
+            }
+        });
+        knotenProp.addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                knoten.setText("Knoten: " + newValue);
+            }
+        });
+
 
 
         return new TitledPane("Binärbaum", layout);
