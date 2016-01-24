@@ -13,12 +13,14 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -160,10 +162,24 @@ public class Application extends javafx.application.Application {
         gc.setTextAlign(TextAlignment.CENTER);
         canvas.setHeight(400);
         canvas.setWidth(400);
+        StackPane stackPane = new StackPane(canvas);
+        stackPane.setAlignment(Pos.CENTER);
+        ScrollPane scrollPane = new ScrollPane(stackPane);
 
-        Pane pane = new Pane();
-        pane.getChildren().addAll(canvas);
-        ScrollPane scrollPane = new ScrollPane(pane);
+        /*final double SKALIERUNG = 1.1; //Geschwindigkeit des Zoomens
+        stackPane.setOnScroll(new EventHandler<ScrollEvent>() {
+            @Override
+            public void handle(ScrollEvent event) {
+                event.consume();
+                if (event.getDeltaY() == 0)
+                    return;
+                double skalierungsFaktor = (event.getDeltaY() > 0) ? SKALIERUNG : 1 / SKALIERUNG;
+
+                stackPane.setScaleX(skalierungsFaktor * stackPane.getScaleX());
+                stackPane.setScaleY(skalierungsFaktor * stackPane.getScaleY());
+            }
+        });*/
+
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
         TitledPane tpBaum = tpBaum();
         TitledPane chat = new TitledPane("Chat", new Pane());
